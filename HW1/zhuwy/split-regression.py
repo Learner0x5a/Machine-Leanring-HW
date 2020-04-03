@@ -69,12 +69,12 @@ def norm(sub):
     x = sub_BuildingArea
     y = mlb_dataset.Price.values[sub_index][filter_index][:,np.newaxis]
     y = y/1e5
-    # plt.scatter(x,y)
-    # plt.xlabel('BuildingArea')
-    # plt.ylabel('Price (1e5)')
-    # plt.title(sub)
-    # plt.savefig('images/'+sub+'.png')
-    # plt.clf()
+    plt.scatter(x,y)
+    plt.xlabel('BuildingArea')
+    plt.ylabel('Price (1e5)')
+    plt.title(sub)
+    plt.savefig('images/'+sub+'.png')
+    plt.clf()
 
     if len(x) > 1 and not x.max() == x.min():
         x = (x - x.min())/(x.max()-x.min())
