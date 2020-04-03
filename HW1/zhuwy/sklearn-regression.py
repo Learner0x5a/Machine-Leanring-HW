@@ -55,7 +55,7 @@ Postcode = mlb_dataset.Postcode.values[index][:,np.newaxis]
 Propertycount = mlb_dataset.Propertycount.values[index][:,np.newaxis]
 Car = mlb_dataset.Car.values[index][:,np.newaxis]
 
-x = np.hstack((Suburb,BuildingArea,Postcode,Rooms,Bathroom,Propertycount,Car))
+x = np.hstack((BuildingArea,Postcode,Rooms,Bathroom,Propertycount,Car))
 y = mlb_dataset.Price.values[index]
 x = (x - x.min())/(x.max()-x.min())
 y = y/1e5

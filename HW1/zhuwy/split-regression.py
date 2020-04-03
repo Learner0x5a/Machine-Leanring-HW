@@ -14,13 +14,13 @@ mlb_dataset = mlb_dataset.dropna(axis=0)
 # mlb_dataset.to_csv('no-nan-Melbourne_housing_FULL.csv')
 print(mlb_dataset.head())
 
-raw_buildingarea = mlb_dataset.BuildingArea.values
-raw_price = mlb_dataset.Price.values/1e5
-plt.scatter(raw_buildingarea,raw_price,s=2)
-plt.xlabel('BuildingArea')
-plt.ylabel('Price (1e5)')
-plt.savefig('raw-price.png')
-plt.clf()
+# raw_buildingarea = mlb_dataset.BuildingArea.values
+# raw_price = mlb_dataset.Price.values/1e5
+# plt.scatter(raw_buildingarea,raw_price,s=2)
+# plt.xlabel('BuildingArea')
+# plt.ylabel('Price (1e5)')
+# plt.savefig('raw-price.png')
+# plt.clf()
 
 class LinearRegression(nn.Module):
     def __init__(self):
@@ -69,12 +69,12 @@ def norm(sub):
     x = sub_BuildingArea
     y = mlb_dataset.Price.values[sub_index][filter_index][:,np.newaxis]
     y = y/1e5
-    plt.scatter(x,y)
-    plt.xlabel('BuildingArea')
-    plt.ylabel('Price (1e5)')
-    plt.title(sub)
-    plt.savefig('images/'+sub+'.png')
-    plt.clf()
+    # plt.scatter(x,y)
+    # plt.xlabel('BuildingArea')
+    # plt.ylabel('Price (1e5)')
+    # plt.title(sub)
+    # plt.savefig('images/'+sub+'.png')
+    # plt.clf()
 
     if len(x) > 1 and not x.max() == x.min():
         x = (x - x.min())/(x.max()-x.min())
@@ -164,10 +164,10 @@ print('test loss:{:.6f}'.format(loss.data))
 # loss = mean_squared_error(preds,y_train)
 # print(loss,model.intercept_,model.coef_)
 
-plt.scatter(x_train,y_train,c='black',s=8)
+plt.scatter(x_train,y_train,s=2)
 plt.scatter(x_train,test_preds.cpu().detach().numpy(),c='red',s=2,label='predict,loss='+str(loss.cpu().detach().numpy()))
-plt.xlabel(u'True (1e5)')
-plt.ylabel(u'Predicted (1e5)')
+plt.xlabel(u'BuildingArea')
+plt.ylabel(u'Price (1e5)')
 plt.legend()
 plt.savefig("lr.png")
 plt.clf()
