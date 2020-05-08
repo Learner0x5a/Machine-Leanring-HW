@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 class BinarySVC:
     def __init__(self,C,toler,maxIter,**kernelargs):
-        self.C = C # 对分类错误的惩罚程度；两类点采用两种C，从而实现对误报/漏报的偏向
+        self.C = C # 对分类错误的惩罚程度；可以尝试：两类点采用两种C，从而实现对误报/漏报的偏向
         self.toler = toler # 误差限
         self.maxIter = maxIter # 迭代限
         self.kwargs = kernelargs # 核函数的参数
@@ -26,12 +26,14 @@ class BinarySVC:
         self.E = None
         self.K = None
 
-        self.support_vector_x = None
+        self.support_vector_x = None # 支持向量
         self.support_vector_index = None
+        self.support_vector_alpha = None
+        self.support_vector_label = None
         self.w = 0.
 
     # 计算误差
-    # 尝试：调高欺诈数据的loss权重，就是当label=欺诈时，给原始的E乘个系数
+    # 可以尝试：调高欺诈数据的loss权重，就是当label=欺诈时，给原始的E乘个系数
     def EK(self,k):
         fxk = np.dot(self.alpha*self.label,self.K[:,k])+self.b
         Ek = fxk - float(self.label[k])
@@ -230,9 +232,11 @@ def dataloader(filepath):
 X,Y = dataloader('creditcard.csv')
 Y = np.reshape(Y,(np.shape(Y)[0]))
 
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X,Y,test_size=0.2)
 svc = BinarySVC(C=0.5,toler=1e-4,maxIter=1e4,kernel='linear',theta=1.)
-svc.fit(X,Y)
-predict = svc.transform(X)
+svc.fit(X_train,y_train)
+predict = svc.transform(X_test)
 
 # # baseline
 # from sklearn.svm import SVC
@@ -245,7 +249,7 @@ from sklearn.metrics import mean_squared_error
 
 from sklearn import metrics
 from sklearn.metrics import auc
-fpr, tpr, thresholds = metrics.roc_curve(Y, predict)
+fpr, tpr, thresholds = metrics.roc_curve(y_test, predict)
 print(fpr,tpr,thresholds)
 roc_auc = metrics.auc(fpr,tpr)
 plt.title('ROC')
@@ -255,4 +259,4 @@ plt.plot([0,1],[0,1],'r--')
 plt.ylabel('True Positive Rate')
 plt.xlabel('False Positive Rate')
 plt.savefig('roc.png')
-print(mean_squared_error(Y,predict),roc_auc)
+print(mean_squared_error(y_test,predict),roc_auc)
