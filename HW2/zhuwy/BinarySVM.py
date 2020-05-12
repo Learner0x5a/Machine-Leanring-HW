@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 
-np.random.seed(2)
+np.random.seed(0)
 
 class BinarySVC:
     def __init__(self,C,toler,maxIter,**kernelargs):
@@ -37,8 +37,8 @@ class BinarySVC:
     def EK(self,k):
         fxk = np.dot(self.alpha*self.label,self.K[:,k])+self.b
         Ek = fxk - float(self.label[k])
-        if self.label[k] == 1:
-            Ek = Ek*5.
+        # if self.label[k] == 1:
+        #     Ek = Ek*5.
         return Ek
     # 更新误差
     def updateEK(self,k):
@@ -210,7 +210,7 @@ class BinarySVC:
                 pred += self.support_vector_alpha[j] * self.support_vector_label[j] * self.Kernel(self.support_vector_x[j],test[i,:])
             result.append(pred)
         result = np.asarray(result)
-        # result = result/max(abs(result)) # 归一化
+        result = result/max(abs(result)) # 归一化
         # 分类阈值
         # result = (result > 0.).astype(np.int)
         return result
@@ -228,13 +228,17 @@ def dataloader(filepath):
     data_select = pd.concat([data_safe.head(400),data_fraud.head(80)],axis=0,ignore_index=True)
     x_feature = data_select.iloc[:,1:29]
     y = data_select.loc[:,['Class']]
+    
 
-    return x_feature.to_numpy(), y.to_numpy()
+
+    return x_feature.to_numpy(),y.to_numpy()
+
+
 
 X,Y = dataloader('creditcard.csv')
 Y = np.reshape(Y,(np.shape(Y)[0]))
 
-
+######################################### TSNE #########################################
 # labels = []
 # for y in Y:
 #     labels.append(str(y))
@@ -259,35 +263,45 @@ Y = np.reshape(Y,(np.shape(Y)[0]))
 #                      ha='right',
 #                      va='bottom')
 #     plt.savefig(filename)
+#     plt.clf()
 # tsne = TSNE(n_components=2)
 # low_dim_embs = tsne.fit_transform(X)
 # plot_with_labels(low_dim_embs, labels, 'tsne.png')
+######################################### TSNE #########################################
 
 from time import time
 from sklearn.model_selection import train_test_split
+
+# 参与训练的欺诈交易数据占总欺诈交易数据样本比例不超过3/5
+# X_train, X_test, y_train, y_test = train_test_split(X,Y,test_size=0.2)
+X_train = np.concatenate((X[0:360],X[-40:]),axis=0)
+X_test = X[360:440]
+y_train = np.concatenate((Y[0:360],Y[-40:]),axis=0)
+y_test = Y[360:440]
+
 start_time = time()
-X_train, X_test, y_train, y_test = train_test_split(X,Y,test_size=0.2)
-svc = BinarySVC(C=1e-4,toler=1e-4,maxIter=1e4,kernel='linear',theta=1.)
+svc = BinarySVC(C=1,toler=1e-4,maxIter=1e4,kernel='rbf',theta=1.)
 svc.fit(X_train,y_train)
 predict = svc.transform(X_test)
 end_time = time()
 print('Training time:',end_time-start_time)
+
 # # baseline
 # from sklearn.svm import SVC
 # svc = SVC()
-# svc.fit(X,Y)
-# predict = svc.predict(X)
+# svc.fit(X_train,y_train)
+# predict = svc.predict(X_test)
 
 
-from sklearn.metrics import mean_squared_error,roc_curve,auc
-fpr, tpr, thresholds = roc_curve(y_test, predict)
-print(fpr,tpr,thresholds)
-roc_auc = auc(fpr,tpr)
-plt.title('ROC')
-plt.plot(fpr, tpr,'b',label='AUC = %0.4f'% roc_auc)
-plt.legend(loc='lower right')
-plt.plot([0,1],[0,1],'r--')
-plt.ylabel('True Positive Rate')
-plt.xlabel('False Positive Rate')
-plt.savefig('roc.png')
-print(mean_squared_error(y_test,predict),roc_auc)
+from sklearn.metrics import mean_squared_error,precision_recall_curve,auc
+precision, recall, thresholds = precision_recall_curve(y_test, predict)
+print(precision,recall,thresholds)
+PR_auc = auc(recall,precision)
+# plt.title('ROC')
+plt.plot(recall, precision,'b',label='AUC = %0.4f'% PR_auc)
+plt.legend(loc='lower left')
+# plt.plot([0,1],[1,0],'r--')
+plt.ylabel('Precision')
+plt.xlabel('Recall')
+plt.savefig('PR.png')
+print(mean_squared_error(y_test,predict),PR_auc)
