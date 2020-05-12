@@ -4,12 +4,12 @@ SVM SMO算法详细推导及总结：https://blog.csdn.net/weixin_42001089/artic
 
 重构代码，封装，实现类似于sklearn的接口
 '''
-import sys
 import numpy as np
-from os import listdir
 import matplotlib
 matplotlib.use('AGG')
 import matplotlib.pyplot as plt
+
+np.random.seed(2)
 
 class BinarySVC:
     def __init__(self,C,toler,maxIter,**kernelargs):
@@ -33,10 +33,12 @@ class BinarySVC:
         self.w = 0.
 
     # 计算误差
-    # 可以尝试：调高欺诈数据的loss权重，就是当label=欺诈时，给原始的E乘个系数
+    # 可以尝试：调整欺诈数据的loss权重，就是当label=欺诈时，给原始的E乘个系数
     def EK(self,k):
         fxk = np.dot(self.alpha*self.label,self.K[:,k])+self.b
         Ek = fxk - float(self.label[k])
+        if self.label[k] == 1:
+            Ek = Ek*5.
         return Ek
     # 更新误差
     def updateEK(self,k):
@@ -232,12 +234,44 @@ def dataloader(filepath):
 X,Y = dataloader('creditcard.csv')
 Y = np.reshape(Y,(np.shape(Y)[0]))
 
+
+# labels = []
+# for y in Y:
+#     labels.append(str(y))
+# from sklearn.manifold import TSNE
+# def plot_with_labels(low_dim_embs, labels, filename):   # 绘制词向量图
+#     plt.figure()  
+#     for i, label in enumerate(labels):
+#         x, y = low_dim_embs[i, :]
+#         if label == '1':
+#             color = 'b'
+#         else:
+#             color = 'r'
+#         plt.scatter(x, y,c=color)	# 画点，对应low_dim_embs中每个词向量
+#         plt.xticks(()) # 不显示刻度
+#         plt.yticks(()) # 不显示刻度
+#         plt.xlabel('x')
+#         plt.ylabel('y')
+#         plt.annotate(label,	# 显示每个点对应哪个单词
+#                      xy=(x, y),
+#                      xytext=(5, 2),
+#                      textcoords='offset points',
+#                      ha='right',
+#                      va='bottom')
+#     plt.savefig(filename)
+# tsne = TSNE(n_components=2)
+# low_dim_embs = tsne.fit_transform(X)
+# plot_with_labels(low_dim_embs, labels, 'tsne.png')
+
+from time import time
 from sklearn.model_selection import train_test_split
+start_time = time()
 X_train, X_test, y_train, y_test = train_test_split(X,Y,test_size=0.2)
-svc = BinarySVC(C=0.5,toler=1e-4,maxIter=1e4,kernel='linear',theta=1.)
+svc = BinarySVC(C=1e-4,toler=1e-4,maxIter=1e4,kernel='linear',theta=1.)
 svc.fit(X_train,y_train)
 predict = svc.transform(X_test)
-
+end_time = time()
+print('Training time:',end_time-start_time)
 # # baseline
 # from sklearn.svm import SVC
 # svc = SVC()
@@ -245,13 +279,10 @@ predict = svc.transform(X_test)
 # predict = svc.predict(X)
 
 
-from sklearn.metrics import mean_squared_error
-
-from sklearn import metrics
-from sklearn.metrics import auc
-fpr, tpr, thresholds = metrics.roc_curve(y_test, predict)
+from sklearn.metrics import mean_squared_error,roc_curve,auc
+fpr, tpr, thresholds = roc_curve(y_test, predict)
 print(fpr,tpr,thresholds)
-roc_auc = metrics.auc(fpr,tpr)
+roc_auc = auc(fpr,tpr)
 plt.title('ROC')
 plt.plot(fpr, tpr,'b',label='AUC = %0.4f'% roc_auc)
 plt.legend(loc='lower right')
